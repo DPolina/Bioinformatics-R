@@ -1,0 +1,62 @@
+library("graph")
+
+# Шаг 1. Разбиение ридов на k-меры
+
+reads <- c("CTACCGTCT", "ACCGTCTGA", "CGCTACCGT", "GCTACCGTC", "GTCTGAAGA", "TACCGTCTG", "TCTGAAGAA")
+k <- 7 # # длина k-меров
+
+get_kmers <- function(reads, k) {
+  kmers <- c()
+  for (read in reads) {
+    for (i in 1:(nchar(read) - k + 1)) {
+      kmers <- c(kmers, substr(read, i, i + k - 1))
+    }
+  }
+  return(kmers)
+}
+
+kmers <- get_kmers(reads, k)
+print(kmers)
+
+# Шаг 2: Построение графа де Брюйна
+
+build_de_bruijn_graph <- function(kmers) {
+  # Создаем уникальные вершины (префиксы и суффиксы)
+  nodes <- unique(c(substr(kmers, 1, k - 1), substr(kmers, 2, k)))
+  # Создаем пустой граф
+  gr <- graphNEL(nodes = nodes, edgemode = "directed")
+  
+  # Добавляем ребра на основе префиксов и суффиксов
+  for (kmer in kmers) {
+    prefix <- substr(kmer, 1, k - 1)
+    suffix <- substr(kmer, 2, k)
+    gr <- addEdge(from = prefix, to = suffix, graph = gr)
+  }
+  
+  return(gr)
+}
+
+# Построение графа
+graph <- build_de_bruijn_graph(kmers)
+print(graph)
+plot(graph)
+
+# Шаг 3: Нахождение Эйлерова пути
+
+library(eulerian)
+
+eulerian_path <- eulerian(graph)
+print(eulerian_path)
+
+# Шаг 4: Сборка последовательности
+
+assemble_genome <- function(path) {
+  genome <- path[1]
+  for (i in 2:length(path)) {
+    genome <- paste0(genome, substr(path[i], nchar(path[i]), nchar(path[i])))
+  }
+  return(genome)
+}
+
+genome <- assemble_genome(eulerian_path)
+print(genome)

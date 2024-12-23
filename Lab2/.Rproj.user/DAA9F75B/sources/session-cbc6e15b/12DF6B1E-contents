@@ -1,0 +1,66 @@
+# rm(list = ls())
+
+help(dir)
+help(getwd)
+help(read.csv)
+help(length)
+help(as.character)
+help(paste)
+help(mean)
+help(complete.cases)
+help(cor)
+help(data.frame)
+
+
+pollutantmean <- function(directory, pollutant, id) {
+  values <- c()
+  
+  for (i in id) {
+    filename <- paste(directory, "/", sprintf("%03d", i), ".csv", sep = "") 
+    data <- read.csv(filename)
+    values <- c(values, data[[pollutant]])
+  }
+  mean_value <- mean(values, na.rm = TRUE)
+  return(mean_value)
+}
+
+mean_level_nitrate <- pollutantmean("D:\\7 семестр\\Биоинформатика\\Labs\\specdata", "nitrate", 99:149)
+print(mean_level_nitrate)
+
+
+complete <- function(directory, id) {
+  res <- data.frame(id = integer(), nobs = integer())
+  
+  for (i in id) {
+    filename <- paste(directory, "/", sprintf("%03d", i), ".csv", sep = "")
+    data <- read.csv(filename)
+    nobs <- sum(complete.cases(data))
+    res <- rbind(res, data.frame(id = i, nobs = nobs))
+  }
+  return(res)
+}
+
+result <- complete("D:\\7 семестр\\Биоинформатика\\Labs\\specdata", c(4, 6, 10, 13, 14))
+print(result)
+
+
+corr <- function(directory, threshold) {
+  corr_values <- c()
+  files <- list.files(directory, full.names = TRUE)
+  
+  for (file in files) {
+    data <- read.csv(file)
+    full_data <- data[complete.cases(data), ]
+    
+    if (nrow(full_data) > threshold) {
+      correlation <- cor(full_data$sulfate, full_data$nitrate)
+      corr_values <- c(corr_values, correlation)
+    }
+  }
+  return(corr_values)
+}
+
+corr_result <- corr("D:\\7 семестр\\Биоинформатика\\Labs\\specdata", threshold = 970)
+print(corr_result)
+
+

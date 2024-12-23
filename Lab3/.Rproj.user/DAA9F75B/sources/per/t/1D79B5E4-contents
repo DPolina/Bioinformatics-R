@@ -1,0 +1,59 @@
+library(graph)
+library(eulerian)
+library(Rgraphviz)
+
+# help(paste)
+# help(substr)
+# help(nchar)
+# help(unique)
+# help(graphNEL)
+# help(addEdge)
+# help(eulerian)
+
+reads <- c("AATGCACC", "GCACCCGC", "GAATGCAC", "ATGCACCC", "TGCACCCG", "CCGCGAAT", "GCGAATGC", "CCCGCGAA")
+
+generate_kmers <- function(reads, k = 5){
+  kmers <- c()
+  for (read in reads) {
+    for(i in 1:(nchar(read) - k + 1)){
+      kmers <- c(kmers, substr(read, i, i + k - 1))
+    }
+  }
+  unique(kmers)
+}
+
+kmers <- generate_kmers(reads)
+kmers
+
+
+build_graph <- function(kmers){
+  prefix <- substr(kmers, 1, nchar(kmers) - 1)
+  suffix <- substr(kmers, 2, nchar(kmers))
+  nodes <- unique(c(prefix, suffix))
+  
+  grph <- graphNEL(nodes = nodes, edgemode = "directed")
+  
+  for(kmer in kmers){
+    from <- substr(kmer, 1, nchar(kmer) - 1)
+    to <- substr(kmer, 2, nchar(kmer))
+    grph <- addEdge(graph = grph, from = from, to = to)
+  }
+  grph
+}
+
+grph <- build_graph(kmers)
+plot(grph, 'circo')
+
+assemble_genome <- function(eul_path){
+  genome <- eul_path[1]
+  
+  for(i in 2:length(eul_path)){
+    genome <- paste(genome, substr(eul_path[i], nchar(eul_path[i]), nchar(eul_path[i])))
+  }
+  genome
+}
+
+eul_path <- eulerian(main_graph)
+genome <- assemble_genome(eul_path)
+genome
+
